@@ -1,5 +1,3 @@
-require 'pry'
-
 class Dog
     attr_accessor :name, :breed, :id
 
@@ -10,20 +8,20 @@ class Dog
     end
 
     def self.create_table
-        DB[:conn].execute('CREATE TABLE dogs (id INTEGER PRIMARY KEY, 
-        name TEXT, 
-        breed TEXT)')
+        DB[:conn].execute(
+          'CREATE TABLE dogs (id INTEGER PRIMARY KEY, name TEXT, breed TEXT)'
+        )
     end
 
-    def self.drop_table 
+    def self.drop_table
         DB[:conn].execute('DROP TABLE dogs')
     end
 
     def save
-        DB[:conn].execute("INSERT INTO dogs (name,breed) VALUES 
-        ('#{name}','#{breed}')")
+        DB[:conn].execute(
+          "INSERT INTO dogs (name, breed) VALUES (?,?)", [name, breed]
+        )
         self.id = DB[:conn].last_insert_row_id
-        
         Dog.new(name: name, breed: breed, id: self.id)
     end
 
@@ -33,13 +31,15 @@ class Dog
     end
 
     def self.find_by_id(id_value)
-        dog = DB[:conn].execute("SELECT * FROM dogs WHERE id = #{id_value}")[0]
+        dog = DB[:conn].execute("SELECT * FROM dogs WHERE id = ?",[id_value])[0]
 
         Dog.new_from_db(dog)
     end
 
     def self.find_or_create_by(name: ,breed:)
-        result = DB[:conn].execute("SELECT * FROM dogs WHERE name = ? AND breed = ?", [name, breed])[0]
+        result = DB[:conn].execute(
+          "SELECT * FROM dogs WHERE name = ? AND breed = ?", [name, breed]
+          )[0]
         if result == nil
             test_dog = Dog.create(name: name, breed: breed)
             return test_dog
@@ -50,17 +50,16 @@ class Dog
     def self.new_from_db(row)
         new_dog = Dog.new(name: row[1], breed: row[2], id: row[0])
     end
-    
+
     def self.find_by_name(name)
         result = DB[:conn].execute("SELECT * FROM dogs WHERE name = ?", [name])[0]
         self.new_from_db(result)
     end
 
     def update
-        DB[:conn].execute("UPDATE dogs SET name = ?, breed = ? WHERE id = ?", [self.name, self.breed, self.id])
-
+        DB[:conn].execute(
+          "UPDATE dogs SET name = ?, breed = ? WHERE id = ?",
+          [self.name, self.breed, self.id]
+        )
     end
-
-
-
 end
